@@ -1,30 +1,21 @@
-using API.Data;
-using Microsoft.EntityFrameworkCore;
+using API.Extensions;
 
 const string ANGULAR_CORS_POLICY = "AngularPolicy";
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddDbContext<DataContext>(options =>
-{
-    string? connString = builder.Configuration.GetConnectionString("DefaultConnection");
-    options.UseSqlite(connString);
-});
-builder.Services.AddControllers();
-builder.Services.AddCors(options => {
-    options.AddPolicy(ANGULAR_CORS_POLICY, policy => {
-        policy
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-            .WithOrigins("https://localhost:4200");
-    });
-});
+builder.Services
+    .AddApplicationServices(builder.Configuration)
+    .AddIdentityServices(builder.Configuration)
+    .AddCorsPolicy(ANGULAR_CORS_POLICY, ["https://localhost:4200"])
+    .AddControllers();
 
 var app = builder.Build();
 
-app.UseRouting();
-app.UseCors(ANGULAR_CORS_POLICY);
-app.UseAuthorization();
-app.MapControllers();
+app.UseRouting()
+    .UseCors(ANGULAR_CORS_POLICY)
+    .UseAuthentication()
+    .UseAuthorization();
 
+app.MapControllers();
 app.Run();
